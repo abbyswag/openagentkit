@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class Pipeline:
     class Valves(BaseModel):
         OPENAI_API_KEY: str
-        MODEL_ID: str 
+        MODEL_ID: str = "gpt-4.1-nano"
 
     class Tools:
         def __init__(self, pipeline):
