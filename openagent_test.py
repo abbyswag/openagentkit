@@ -29,12 +29,10 @@ class Pipeline(FunctionCallingBlueprint):
 
         self.name = "openagent_test"
 
-        base_valves = super().Valves()
         self.valves = self.Valves(
             **{
-                **base_valves.model_dump(),
-                "pipelines": ["*"],
+                **self.valves.model_dump(),
+                "pipelines": ["*"],  # Connect to all pipelines
             },
         )
-
         self.tools = self.Tools(self)
