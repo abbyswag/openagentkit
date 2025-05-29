@@ -10,6 +10,7 @@ class Pipeline:
     def __init__(self):
         self.name = "LLM Pipeline"
         self.valves = self.Valves()
+        print("OpenAI key in use:", self.valves.OPENAI_API_KEY)
         self.client = OpenAI(api_key=self.valves.OPENAI_API_KEY)
 
     def pipe(self, user_message: str, model_id: str, messages: list, body: dict):
