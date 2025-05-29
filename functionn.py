@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class Pipeline:
     class Valves(BaseModel):
-        OPENAI_API_KEY: str
+        OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY")
         MODEL_ID: str = "gpt-4.1-nano"
 
     class Tools:
