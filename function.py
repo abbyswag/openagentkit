@@ -1,8 +1,13 @@
-import openai
+from openai import OpenAI
 import json
 import os
+from pydantic import BaseModel
 
 class Pipeline:
+    class Valves(BaseModel):
+        OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY")
+        MODEL_ID: str = "gpt-3.5-turbo-0613"
+
     class Tools:
         def __init__(self, pipeline):
             self.pipeline = pipeline
@@ -13,6 +18,7 @@ class Pipeline:
 
     def __init__(self):
         self.name = "Tool Pipeline"
+        self.valves = self.Valves()
         self.tools = self.Tools(self)
         self.tool_specs = [
             {
@@ -28,8 +34,8 @@ class Pipeline:
                 }
             }
         ]
-        # Set your OpenAI API key from environment or hardcode for testing
-        openai.api_key = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY")
+        # Set your OpenAI API key from valves
+        self.client = OpenAI(api_key=self.valves.OPENAI_API_KEY)
 
     def pipe(self, user_message: str, model_id: str, messages: list, body: dict):
         """
@@ -39,23 +45,23 @@ class Pipeline:
         # Add the user message to the conversation
         conversation = messages + [{"role": "user", "content": user_message}]
         try:
-            response = openai.ChatCompletion.create(
-                model=model_id or "gpt-3.5-turbo-0613",
+            response = self.client.chat.completions.create(
+                model=model_id or self.valves.MODEL_ID,
                 messages=conversation,
                 functions=self.tool_specs,
                 function_call="auto"
             )
-            message = response["choices"][0]["message"]
-            if "function_call" in message:
-                func_call = message["function_call"]
-                func_name = func_call["name"]
-                params = json.loads(func_call["arguments"])
+            message = response.choices[0].message
+            if message.function_call:
+                func_call = message.function_call
+                func_name = func_call.name
+                params = json.loads(func_call.arguments)
                 if hasattr(self.tools, func_name):
                     result = getattr(self.tools, func_name)(**params)
                     return result
                 else:
                     return f"Unknown function: {func_name}"
             else:
-                return message["content"]
+                return message.content
         except Exception as e:
             return f"Error: {e}" 
